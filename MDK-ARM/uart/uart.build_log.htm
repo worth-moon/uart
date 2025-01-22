@@ -27,20 +27,20 @@ Project File Date:  01/22/2025
 <h2>Output:</h2>
 *** Using Compiler 'V6.22', folder: 'C:\Keil_v5\ARM\ARMCLANG\Bin'
 Build target 'uart'
-../Core/Src/main.c(217): warning: passing 'uint8_t[128]' (aka 'unsigned char[128]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
-  217 |                         modbus_rx_len = strlen(modbus_rx_buffer);//<B7><A2><CF><D6><D3><F6><B5><BD>0x00<BE>ͽ<E1><CA><F8><C1><CB>
-      |                                                ^~~~~~~~~~~~~~~~
-C:\Keil_v5\ARM\ARMCLANG\bin\..\include\string.h(335): note: passing argument to parameter here
-  335 | extern _ARMABI size_t strlen(const char * /*s*/) __attribute__((__nonnull__(1)));
-      |                                                ^
-../Core/Src/main.c(416): warning: passing 'uint8_t[100]' (aka 'unsigned char[100]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
-  416 |         sprintf(error_buffer, "Wrong parameters value: file %s on line %d\r\n", file, line);
+../Core/Src/main.c(476): warning: passing 'char[18]' to parameter of type 'const uint8_t *' (aka 'const unsigned char *') converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+  476 |                 HAL_UART_Transmit(&huart1, "RUN Error_Handler", strlen("RUN Error_Handler"), 1000);
+      |                                            ^~~~~~~~~~~~~~~~~~~
+../Drivers/STM32F1xx_HAL_Driver/Inc\stm32f1xx_hal_uart.h(749): note: passing argument to parameter 'pData' here
+  749 | HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart, const uint8_t *pData, uint16_t Size, uint32_t Timeout);
+      |                                                                               ^
+../Core/Src/main.c(493): warning: passing 'uint8_t[100]' (aka 'unsigned char[100]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+  493 |         sprintf(error_buffer, "Wrong parameters value: file %s on line %d\r\n", file, line);
       |                 ^~~~~~~~~~~~
 C:\Keil_v5\ARM\ARMCLANG\bin\..\include\stdio.h(417): note: passing argument to parameter here
   417 | extern _ARMABI int sprintf(char * __restrict /*s*/, const char * __restrict /*format*/, ...) __attribute__((__nonnull__(1,2)));
       |                                                   ^
-../Core/Src/main.c(417): warning: passing 'uint8_t[100]' (aka 'unsigned char[100]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
-  417 |         HAL_UART_Transmit(&huart1, error_buffer, strlen(error_buffer), 1000);
+../Core/Src/main.c(494): warning: passing 'uint8_t[100]' (aka 'unsigned char[100]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+  494 |         HAL_UART_Transmit(&huart1, error_buffer, strlen(error_buffer), 1000);
       |                                                         ^~~~~~~~~~~~
 C:\Keil_v5\ARM\ARMCLANG\bin\..\include\string.h(335): note: passing argument to parameter here
   335 | extern _ARMABI size_t strlen(const char * /*s*/) __attribute__((__nonnull__(1)));
@@ -48,7 +48,7 @@ C:\Keil_v5\ARM\ARMCLANG\bin\..\include\string.h(335): note: passing argument to 
 3 warnings generated.
 compiling main.c...
 linking...
-Program Size: Code=9230 RO-data=1118 RW-data=16 ZI-data=1392  
+Program Size: Code=9622 RO-data=1114 RW-data=16 ZI-data=1392  
 FromELF: creating hex file...
 "uart\uart.axf" - 0 Error(s), 3 Warning(s).
 
@@ -73,7 +73,7 @@ Package Vendor: Keil
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE:6.1.0
-Build Time Elapsed:  00:00:02
+Build Time Elapsed:  00:00:03
 </pre>
 </body>
 </html>

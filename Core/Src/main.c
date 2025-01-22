@@ -152,6 +152,12 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 void modbus_send(uint8_t* _pBuf, uint8_t _ucLen);
 uint16_t modbus_crc16(uint8_t* _pBuf, uint16_t _usLen);
+uint8_t rx_crc_again(void);
+void modbus_rx_data_handle(void);
+void modbus_stop_rx(void);
+void modbus_start_rx(void);
+void modbus_restart_rx(void);
+void modbus_analyze_rx_data(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -201,72 +207,34 @@ int main(void)
   motor_vel[MOTOR_VEL_ERR].address = 0x0002;
   motor_vel[MOTOR_VEL_ERR].data = 0x5678;
 
-  HAL_UART_Receive_IT(&huart1, modbus_rx_buffer + modbus_rx_count, 1); //开启接收中断
-  assert_param(0);
+  modbus_start_rx();
+  //assert_param(0);
+//  uint8_t test_tx_data_crc[] = {01,06,00,01,00,10};
+//  modbus_send(test_tx_data_crc, 6);
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  //0的检测
-	  if ((modbus_timeout_count_now = HAL_GetTick()) - modbus_timeout_count_last > 4 && modbus_timeout_count_last != 0 && modbus_only_handle_once == 0 && modbus_rx_count>4)//表示数据接收超时，即完成接收。如果考虑实时性问题，可以单独拿个定时器做超时判断和处理任务。这里的modbus_rx_count>4是根据实际情况加进去的，不加则会因为modbus_rx_count<=2，而在下面赋值的时候出现数组越界，进入Hault_Handler。这里有个层级的问题
+	  if ((modbus_timeout_count_now = HAL_GetTick()) - modbus_timeout_count_last > 4 && modbus_timeout_count_last != 0)//超时检测
 	  {
-		  
-		  HAL_UART_AbortReceive_IT(&huart1);//停止串口接收
-		  //先对一下CRC检验
-			modbus_rx_len = strlen(modbus_rx_buffer);//发现遇到0x00就结束了
-//			if(modbus_rx_count <= 0x02)
-//				modbus_rx_count = 255;
-			assert_param(modbus_rx_count>2);
-			//HAL_UART_Transmit(&huart1, &modbus_rx_count, 1, 100);
-		  uint8_t crc_rx_buffer[modbus_rx_count-2];
-		  for (int i = 0; i < modbus_rx_count - 2; i++)
+		  //HAL_UART_Transmit(&huart1, "超时", strlen("超时"), 1000);
+		  if (modbus_only_handle_once == 0)//一次指令只响应一次，回复后需要下次接收才能响应
 		  {
-			  crc_rx_buffer[i] = modbus_rx_buffer[i];
-		  }
-		  crc_rx_computer = modbus_crc16(crc_rx_buffer, modbus_rx_count - 2);
-		  crc_rx_rec = (modbus_rx_buffer[modbus_rx_count - 2]<<8) + modbus_rx_buffer[modbus_rx_count - 1];
-		  if (crc_rx_computer == crc_rx_rec)//CRC能过，才有后面的事
-		  {
-			  if (modbus_rx_buffer[0] == modbus_slave_addr)//确定从机地址对得上
+			  //HAL_UART_Transmit(&huart1, "单次运行", strlen("单次运行"), 1000);
+			  if (modbus_rx_count > 4)
 			  {
-				  memset(modbus_tx_buffer, 0, S_RX_BUF_SIZE); //清空接收缓存
-				  modbus_tx_buffer[0] = modbus_slave_addr; //地址
-				  switch (modbus_rx_buffer[1])
-				  {
-					  case 0x03: //读寄存器
-						  modbus_tx_buffer[1] = 0x03;//功能码
-						  uint16_t add_tar = (modbus_rx_buffer[2] << 8 ) + modbus_rx_buffer[3];
-						  uint16_t read_reg_count;//寄存器个数
-						  read_reg_count = (modbus_rx_buffer[4] << 8) + modbus_rx_buffer[5];
-						  modbus_tx_buffer[2] = 2 * read_reg_count;//数据个数
-						  //轮询找寄存器地址,这里只写了read_reg_count为1的情况
-						  for (int i = 0; i < sizeof(motor_vel) / sizeof(motor_vel[0]); i++)
-						  {
-							  if (motor_vel[i].address == add_tar)
-							  {
-								  //将指定地址的寄存器数据拆分成3、4号元素
-								  modbus_tx_buffer[3] = motor_vel[i].data >> 8;
-								  modbus_tx_buffer[4] = motor_vel[i].data & 0xff;
-							  }
-						  }
-						  modbus_send(modbus_tx_buffer, 5);//CRC发送
-						  break;
-					  case 0x06: //写单个寄存器
-						  modbus_tx_buffer[1] = 0x06;
-						  break;
-					  default:
-						  break;
-				  }
 
+				  modbus_analyze_rx_data();
+			  }
+			  else
+			  {
+				  //HAL_UART_Transmit(&huart1, "接收个数不够", strlen("接收个数不够"), 1000);
+				  modbus_restart_rx();
 			  }
 		  }
-		  //清空接收数组，开启串口接收
-		  memset(modbus_rx_buffer, 0, S_RX_BUF_SIZE);
-		  modbus_rx_count = 0;
-		  HAL_UART_Receive_IT(&huart1, modbus_rx_buffer + modbus_rx_count, 1); //开启接收中断
-		  modbus_only_handle_once = 1;
-		  
 	  }
+
+	  
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -314,6 +282,115 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void modbus_analyze_rx_data(void)
+{
+	modbus_stop_rx();
+	if (rx_crc_again() == 1)//CRC能过，才有后面的事
+	{
+		modbus_rx_data_handle();
+	}
+	else
+	{
+		//HAL_UART_Transmit(&huart1, "CRC没过", strlen("CRC没过"), 1000);
+	}
+	modbus_restart_rx();
+}
+void modbus_stop_rx(void)
+{
+	HAL_UART_AbortReceive_IT(&huart1);//停止串口接收
+}
+
+void modbus_start_rx(void)
+{
+	HAL_UART_Receive_IT(&huart1, modbus_rx_buffer + modbus_rx_count, 1); //开启接收中断
+}
+
+void modbus_restart_rx(void)
+{
+	//清空接收数组，开启串口接收
+	memset(modbus_rx_buffer, 0, S_RX_BUF_SIZE);
+	modbus_rx_count = 0;
+	HAL_UART_Receive_IT(&huart1, modbus_rx_buffer + modbus_rx_count, 1); //开启接收中断
+	modbus_only_handle_once = 1;
+}
+void modbus_rx_data_handle(void)
+{
+	if (modbus_rx_buffer[0] == modbus_slave_addr)//确定从机地址对得上
+	{
+		memset(modbus_tx_buffer, 0, S_RX_BUF_SIZE); //清空接收缓存
+		modbus_tx_buffer[0] = modbus_slave_addr; //地址
+		switch (modbus_rx_buffer[1])
+		{
+			case 0x03: //读寄存器
+				modbus_tx_buffer[1] = 0x03;//功能码
+				uint16_t add_tar = (modbus_rx_buffer[2] << 8) + modbus_rx_buffer[3];
+				uint16_t read_reg_count;//寄存器个数
+				read_reg_count = (modbus_rx_buffer[4] << 8) + modbus_rx_buffer[5];
+				modbus_tx_buffer[2] = 2 * read_reg_count;//数据个数
+				//轮询找寄存器地址,这里只写了read_reg_count为1的情况
+				for (int i = 0; i < sizeof(motor_vel) / sizeof(motor_vel[0]); i++)
+				{
+					if (motor_vel[i].address == add_tar)
+					{
+						//将指定地址的寄存器数据拆分成3、4号元素
+						modbus_tx_buffer[3] = motor_vel[i].data >> 8;
+						modbus_tx_buffer[4] = motor_vel[i].data & 0xff;
+					}
+				}
+				modbus_send(modbus_tx_buffer, 5);//CRC发送
+				break;
+			case 0x06: //写单个寄存器
+				modbus_tx_buffer[1] = 0x06;//功能码
+				uint16_t add_tar_write = (modbus_rx_buffer[2] << 8) + modbus_rx_buffer[3];
+
+				uint16_t write_reg_data;//写入寄存器的值
+				write_reg_data = (modbus_rx_buffer[4] << 8) + modbus_rx_buffer[5];
+				
+				//轮询找寄存器地址,这里只写了read_reg_count为1的情况
+				for (int i = 0; i < sizeof(motor_vel) / sizeof(motor_vel[0]); i++)
+				{
+					if (motor_vel[i].address == add_tar_write)
+					{
+						motor_vel[i].data = write_reg_data;
+						modbus_tx_buffer[2] = motor_vel[i].address >> 8;
+						modbus_tx_buffer[3] = motor_vel[i].address & 0xff;
+						modbus_tx_buffer[4] = motor_vel[i].data >> 8;
+						modbus_tx_buffer[5] = motor_vel[i].data & 0xff;
+					}
+				}
+				modbus_send(modbus_tx_buffer, 6);//CRC发送
+				break;
+			default:
+				//HAL_UART_Transmit(&huart1, "功能码错误", strlen("功能码错误"), 1000);
+				break;
+		}
+
+	}
+	else
+	{
+		//HAL_UART_Transmit(&huart1, "地址错误", strlen("地址错误"), 1000);
+	}
+}
+uint8_t rx_crc_again(void)
+{
+	int16_t rx_count_nocrc = modbus_rx_count - 2;//确保modbus_rx_count不超过128，写成16位保险一点
+	assert_param(rx_count_nocrc > 0);//参数保护，防止越界——回头可以取ERROR和Hault中断都放个UART发送错误信息
+	uint8_t crc_rx_buffer[modbus_rx_count - 2];
+	for (int i = 0; i < modbus_rx_count - 2; i++)//除校验码，其他数据都存入新数组，而后计算CRC校验
+	{
+		crc_rx_buffer[i] = modbus_rx_buffer[i];
+	}
+	crc_rx_computer = modbus_crc16(crc_rx_buffer, modbus_rx_count - 2);//计算的CRC码
+	crc_rx_rec = (modbus_rx_buffer[modbus_rx_count - 2] << 8) + modbus_rx_buffer[modbus_rx_count - 1];//接收的CRC码
+	if (crc_rx_computer == crc_rx_rec)
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
 /*
 *********************************************************************************************************
 *	函 数 名: CRC16_Modbus
@@ -396,6 +473,8 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+		HAL_UART_Transmit(&huart1, "RUN Error_Handler", strlen("RUN Error_Handler"), 1000);
+		HAL_Delay(1000);
   }
   /* USER CODE END Error_Handler_Debug */
 }

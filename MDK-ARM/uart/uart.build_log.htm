@@ -3,12 +3,12 @@
 <pre>
 <h1>µVision Build Log</h1>
 <h2>Tool Versions:</h2>
-IDE-Version: ¦ÌVision V5.40.0.0
-Copyright (C) 2024 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: dfasd 8615622157654, sdfasd, LIC=KRMW3-AEGPP-74BS0-BVLBB-6PJ1G-EFZ70
+IDE-Version: ¦ÌVision V5.36.0.0
+Copyright (C) 2021 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: dfasd 8615622157654, sdfasd, LIC=----
  
 Tool Versions:
-Toolchain:       MDK-ARM Plus  Version: 5.40.0.3
+Toolchain:       MDK-Lite  Version: 5.40.0.3
 Toolchain Path:  C:\Keil_v5\ARM\ARMCLANG\Bin
 C Compiler:      ArmClang.exe V6.22
 Assembler:       Armasm.exe V6.22
@@ -27,40 +27,52 @@ Project File Date:  01/22/2025
 <h2>Output:</h2>
 *** Using Compiler 'V6.22', folder: 'C:\Keil_v5\ARM\ARMCLANG\Bin'
 Build target 'uart'
-../Core/Src/main.c(106): warning: passing 'uint8_t[14]' (aka 'unsigned char[14]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
-  106 |                 HAL_UART_Transmit(&huart1,test_str,strlen(test_str),1000);
-      |                                                           ^~~~~~~~
+../Core/Src/main.c(217): warning: passing 'uint8_t[128]' (aka 'unsigned char[128]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+  217 |                         modbus_rx_len = strlen(modbus_rx_buffer);//<B7><A2><CF><D6><D3><F6><B5><BD>0x00<BE>Í½<E1><CA><F8><C1><CB>
+      |                                                ^~~~~~~~~~~~~~~~
 C:\Keil_v5\ARM\ARMCLANG\bin\..\include\string.h(335): note: passing argument to parameter here
   335 | extern _ARMABI size_t strlen(const char * /*s*/) __attribute__((__nonnull__(1)));
       |                                                ^
-1 warning generated.
+../Core/Src/main.c(416): warning: passing 'uint8_t[100]' (aka 'unsigned char[100]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+  416 |         sprintf(error_buffer, "Wrong parameters value: file %s on line %d\r\n", file, line);
+      |                 ^~~~~~~~~~~~
+C:\Keil_v5\ARM\ARMCLANG\bin\..\include\stdio.h(417): note: passing argument to parameter here
+  417 | extern _ARMABI int sprintf(char * __restrict /*s*/, const char * __restrict /*format*/, ...) __attribute__((__nonnull__(1,2)));
+      |                                                   ^
+../Core/Src/main.c(417): warning: passing 'uint8_t[100]' (aka 'unsigned char[100]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+  417 |         HAL_UART_Transmit(&huart1, error_buffer, strlen(error_buffer), 1000);
+      |                                                         ^~~~~~~~~~~~
+C:\Keil_v5\ARM\ARMCLANG\bin\..\include\string.h(335): note: passing argument to parameter here
+  335 | extern _ARMABI size_t strlen(const char * /*s*/) __attribute__((__nonnull__(1)));
+      |                                                ^
+3 warnings generated.
 compiling main.c...
 linking...
-Program Size: Code=3818 RO-data=310 RW-data=48 ZI-data=1104  
+Program Size: Code=9230 RO-data=1118 RW-data=16 ZI-data=1392  
 FromELF: creating hex file...
-"uart\uart.axf" - 0 Error(s), 1 Warning(s).
+"uart\uart.axf" - 0 Error(s), 3 Warning(s).
 
 <h2>Software Packages used:</h2>
 
 Package Vendor: ARM
                 https://www.keil.com/pack/ARM.CMSIS.6.1.0.pack
-                ARM::CMSIS@6.1.0
+                ARM.CMSIS.6.1.0
                 CMSIS (Common Microcontroller Software Interface Standard)
    * Component: CORE Version: 6.1.0
 
 Package Vendor: Keil
                 http://www.keil.com/pack/Keil.STM32F1xx_DFP.2.2.0.pack
-                Keil::STM32F1xx_DFP@2.2.0
+                Keil.STM32F1xx_DFP.2.2.0
                 STMicroelectronics STM32F1 Series Device Support, Drivers and Examples
 
 <h2>Collection of Component include folders:</h2>
-  ./RTE/_uart
-  C:/Users/86156/AppData/Local/Arm/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include
-  C:/Users/86156/AppData/Local/Arm/Packs/Keil/STM32F1xx_DFP/2.2.0/Device/Include
+  .\RTE\_uart
+  C:\Users\86156\AppData\Local\Arm\Packs\ARM\CMSIS\6.1.0\CMSIS\Core\Include
+  C:\Users\86156\AppData\Local\Arm\Packs\Keil\STM32F1xx_DFP\2.2.0\Device\Include
 
 <h2>Collection of Component Files used:</h2>
 
-   * Component: ARM::CMSIS:CORE@6.1.0
+   * Component: ARM::CMSIS:CORE:6.1.0
 Build Time Elapsed:  00:00:02
 </pre>
 </body>

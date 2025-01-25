@@ -25,6 +25,9 @@
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include "string.h"
+
+#include "debug_printf.h"
+#include "vofa.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,6 +63,8 @@ typedef struct {
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+float theta, theta_add,theta_max;
+
 uint8_t test_single_char;
 uint8_t test_more_char[22] = {0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x20};
 uint8_t test_str[] = "helloworld!\r\n";
@@ -208,13 +213,31 @@ int main(void)
   motor_vel[MOTOR_VEL_ERR].data = 0x5678;
 
   modbus_start_rx();
+	
   //assert_param(0);
 //  uint8_t test_tx_data_crc[] = {01,06,00,01,00,10};
 //  modbus_send(test_tx_data_crc, 6);
+  theta = 0.0f;
+  theta_add = 0.01f;
+	theta_max = 6.28f;
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  vofa_send_data(0,theta);
+		vofa_send_data(1,theta_add);
+		vofa_send_data(2,theta_max);
+		vofa_sendframetail();
+	  if (theta > theta_max)
+	  {
+		  theta = 0.0f;
+	  }
+		else
+		{
+			theta+=theta_add;
+		}
+//	  my_printf("theta:%f\r\n",theta);
+
 	  if ((modbus_timeout_count_now = HAL_GetTick()) - modbus_timeout_count_last > 4 && modbus_timeout_count_last != 0)//³¬Ê±¼ì²â
 	  {
 		  //HAL_UART_Transmit(&huart1, "³¬Ê±", strlen("³¬Ê±"), 1000);

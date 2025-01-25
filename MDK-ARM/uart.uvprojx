@@ -187,6 +187,7 @@
             <RvdsVP>0</RvdsVP>
             <RvdsMve>0</RvdsMve>
             <RvdsCdeCp>0</RvdsCdeCp>
+            <nBranchProt>0</nBranchProt>
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -340,7 +341,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xB</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;..\Core\BSP\MYPRINTF;..\Core\BSP\VOFA</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -507,6 +508,36 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>BSP/MYPRINTF</GroupName>
+          <Files>
+            <File>
+              <FileName>debug_printf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\BSP\MYPRINTF\debug_printf.c</FilePath>
+            </File>
+            <File>
+              <FileName>debug_printf.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\BSP\MYPRINTF\debug_printf.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>BSP/VOFA</GroupName>
+          <Files>
+            <File>
+              <FileName>vofa.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\BSP\VOFA\vofa.c</FilePath>
+            </File>
+            <File>
+              <FileName>vofa.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\BSP\VOFA\vofa.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>::CMSIS</GroupName>
         </Group>
       </Groups>
@@ -525,5 +556,14 @@
     </components>
     <files/>
   </RTE>
+
+  <LayerInfo>
+    <Layers>
+      <Layer>
+        <LayName>uart</LayName>
+        <LayPrjMark>1</LayPrjMark>
+      </Layer>
+    </Layers>
+  </LayerInfo>
 
 </Project>

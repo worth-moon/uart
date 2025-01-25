@@ -28,6 +28,7 @@
 
 #include "debug_printf.h"
 #include "vofa.h"
+#include "openmv.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,6 +66,14 @@ typedef struct {
 /* USER CODE BEGIN PV */
 float theta, theta_add,theta_max;
 
+//测试协议
+uint8_t uart_count = 0;
+uint8_t test_flag = 0;
+uint8_t rx_buffer[100];
+float tar_buffer[10];
+float X_IN,Y_IN;
+
+//测试外设
 uint8_t test_single_char;
 uint8_t test_more_char[22] = {0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x20};
 uint8_t test_str[] = "helloworld!\r\n";
@@ -212,32 +221,17 @@ int main(void)
   motor_vel[MOTOR_VEL_ERR].address = 0x0002;
   motor_vel[MOTOR_VEL_ERR].data = 0x5678;
 
-  modbus_start_rx();
-	
+  //modbus_start_rx();
+  //HAL_UART_Receive_IT(&huart1, rx_buffer + uart_count, 1);
+  HAL_UART_Receive_IT(&huart1, rx_buffer, 50);
+  
   //assert_param(0);
 //  uint8_t test_tx_data_crc[] = {01,06,00,01,00,10};
 //  modbus_send(test_tx_data_crc, 6);
-  theta = 0.0f;
-  theta_add = 0.01f;
-	theta_max = 6.28f;
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  vofa_send_data(0,theta);
-		vofa_send_data(1,theta_add);
-		vofa_send_data(2,theta_max);
-		vofa_sendframetail();
-	  if (theta > theta_max)
-	  {
-		  theta = 0.0f;
-	  }
-		else
-		{
-			theta+=theta_add;
-		}
-//	  my_printf("theta:%f\r\n",theta);
-
 	  if ((modbus_timeout_count_now = HAL_GetTick()) - modbus_timeout_count_last > 4 && modbus_timeout_count_last != 0)//超时检测
 	  {
 		  //HAL_UART_Transmit(&huart1, "超时", strlen("超时"), 1000);
@@ -468,20 +462,74 @@ void modbus_send(uint8_t * _pBuf, uint8_t _ucLen)
 	//RS485_SendBuf(buf, _ucLen);//发送数据
 }
 
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
+//{
+//	if (huart->Instance == USART1)
+//	{
+//		//缺一个判断超时，缺一个处理
+//		if (modbus_rx_count < S_RX_BUF_SIZE-1)
+//		{
+//			modbus_timeout_count_last = HAL_GetTick();
+//			modbus_rx_count++;
+//			HAL_UART_Receive_IT(&huart1, modbus_rx_buffer + modbus_rx_count, 1); //开启接收中断
+//			modbus_only_handle_once = 0;
+//		}
+//
+//	}
+//}
+
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
+//{
+//	if (huart->Instance == USART1)
+//	{
+//		const static uint8_t uart_rx_len = 10;
+//		const static uint8_t target_flag = 'B';
+//		const static uint8_t target_len = 3;
+//		test_flag = openmv_data_process_flag(rx_buffer, strlen((const char*)rx_buffer), target_flag);
+//		//uart_count = 0;
+////		memset(rx_buffer, 0, strlen((const char*)rx_buffer));
+//		//uart_count++;
+//		//if (uart_count > uart_rx_len)
+//		//{
+//		//	
+//		//}
+//		//HAL_UART_Receive_IT(&huart1, rx_buffer + uart_count, 1);
+//		//标志位置一后，需要执行的任务
+//		if (test_flag == 1)
+//		{
+//			my_printf("收到目标字符\r\n");
+//			test_flag = 0;//如果需要单次执行
+//		}
+//		else
+//		{
+//			
+//		}
+//		memset(rx_buffer, 0, strlen((const char*)rx_buffer));
+//		HAL_UART_Receive_IT(&huart1, rx_buffer, 10);
+//
+//	}
+//}
+
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
 {
-	if (huart->Instance == USART1)
-	{
-		//缺一个判断超时，缺一个处理
-		if (modbus_rx_count < S_RX_BUF_SIZE-1)
-		{
-			modbus_timeout_count_last = HAL_GetTick();
-			modbus_rx_count++;
-			HAL_UART_Receive_IT(&huart1, modbus_rx_buffer + modbus_rx_count, 1); //开启接收中断
-			modbus_only_handle_once = 0;
-		}
+	const static uint8_t uart_rx_len = 50;
+	const static uint8_t target_flag = 'B';
+	const static uint8_t target_len = 2;
 
+	test_flag = openmv_data_process_float(rx_buffer, strlen((const char*)rx_buffer), target_len, tar_buffer);
+	X_IN = tar_buffer[0];
+	Y_IN = tar_buffer[1];
+	
+	//标志位置一后，需要执行的任务
+	if (test_flag == 1)
+	{
+		my_printf("x:%.2f,y:%.2f\r\n",X_IN, Y_IN);
+		test_flag = 0;//单次执行需要该语句
 	}
+	memset(rx_buffer, 0, 50);
+	HAL_UART_Receive_IT(&huart1, rx_buffer+1, 50);
+	//memset(rx_buffer, 0, 50);
 }
 /* USER CODE END 4 */
 

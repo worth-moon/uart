@@ -67,6 +67,8 @@ uint8_t test_str[] = "helloworld!\r\n";
 uint8_t test_rx_buffer[255];
 uint8_t rx_count;
 
+//测试modbus处理时间
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -126,7 +128,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  modbus_loop();
+	  //modbus_loop();
 
 	  
     /* USER CODE END WHILE */
@@ -181,6 +183,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
 {
 	if (huart->Instance == USART1)
 	{
+
 		modbus_uart_rx_callback();
 	}
 }

@@ -226,8 +226,8 @@ int main(void)
   //HAL_UART_Receive_IT(&huart1, rx_buffer + uart_count, 1);
   
   //assert_param(0);
-//  uint8_t test_tx_data_crc[] = {01,06,00,01,00,10};
-//  modbus_send(test_tx_data_crc, 6);
+  uint8_t test_tx_data_crc[] = {0x01,0x10,0x00,0x00,0x00,0x03,0x06,0x12,0x34,0x56,0x78,0x00,0x01};
+  modbus_send(test_tx_data_crc, sizeof(test_tx_data_crc));
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -344,17 +344,22 @@ void modbus_rx_data_handle(void)
 				uint16_t read_reg_count;//寄存器个数
 				read_reg_count = (modbus_rx_buffer[4] << 8) + modbus_rx_buffer[5];
 				modbus_tx_buffer[2] = 2 * read_reg_count;//数据个数
-				//轮询找寄存器地址,这里只写了read_reg_count为1的情况
-				for (int i = 0; i < sizeof(motor_vel) / sizeof(motor_vel[0]); i++)
+				int start_index = 3;
+				for (int i = 0; i < sizeof(motor_vel) / sizeof(motor_vel[0]) && read_reg_count > 0; i++)
 				{
 					if (motor_vel[i].address == add_tar)
 					{
-						//将指定地址的寄存器数据拆分成3、4号元素
-						modbus_tx_buffer[3] = motor_vel[i].data >> 8;
-						modbus_tx_buffer[4] = motor_vel[i].data & 0xff;
+						for (int j = 0; j < read_reg_count && i + j < sizeof(motor_vel) / sizeof(motor_vel[0]); j++)
+						{
+							modbus_tx_buffer[start_index + 2 * j] = motor_vel[i + j].data >> 8;
+							modbus_tx_buffer[start_index + 2 * j + 1] = motor_vel[i + j].data & 0xff;
+						}
+						break;
 					}
 				}
-				modbus_send(modbus_tx_buffer, 5);//CRC发送
+				modbus_send(modbus_tx_buffer, 3+2*read_reg_count);//CRC发送
+				//}
+
 				break;
 			case 0x06: //写单个寄存器
 				modbus_tx_buffer[1] = 0x06;//功能码
@@ -374,6 +379,32 @@ void modbus_rx_data_handle(void)
 						modbus_tx_buffer[4] = motor_vel[i].data >> 8;
 						modbus_tx_buffer[5] = motor_vel[i].data & 0xff;
 					}
+				}
+				modbus_send(modbus_tx_buffer, 6);//CRC发送
+				break;
+			case 0x10:
+				modbus_tx_buffer[1] = 0x10;//功能码
+				uint16_t add_tar_write_continous = (modbus_rx_buffer[2] << 8) + modbus_rx_buffer[3];
+				uint16_t write_byte_count = ((modbus_rx_buffer[4] << 8) + modbus_rx_buffer[5])*2;//这里暴露了一个问题，发送的是十六进制数，可千万别当成十进制数看，否则就跟串口用printf发送十六进制一样搞笑
+
+				int start_index_10 = 7;
+				for (int i = 0; i < sizeof(motor_vel) / sizeof(motor_vel[0]) && write_byte_count > 0; i++)
+				{
+					if (motor_vel[i].address == add_tar_write_continous)
+					{
+						for (int j = 0; j < write_byte_count && i + j < sizeof(motor_vel) / sizeof(motor_vel[0]); j++)
+						{
+							motor_vel[i+j].data = (modbus_rx_buffer[start_index_10 + 2 * j] << 8) + modbus_rx_buffer[start_index_10 + 2 * j + 1];
+						}
+						break;
+					}
+				}
+
+
+				//发送部分
+				for (int i = 0; i < 6; i++)
+				{
+					modbus_tx_buffer[i] = modbus_rx_buffer[i];
 				}
 				modbus_send(modbus_tx_buffer, 6);//CRC发送
 				break;

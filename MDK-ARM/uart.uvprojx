@@ -341,7 +341,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xB</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;..\Core\BSP\MYPRINTF;..\Core\BSP\VOFA;..\Core\BSP\OPENMV</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;..\Core\BSP\MYPRINTF;..\Core\BSP\VOFA;..\Core\BSP\OPENMV;..\Core\BSP\MODBUS</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -549,6 +549,21 @@
               <FileName>openmv.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\Core\BSP\OPENMV\openmv.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>BSP/MODBUS</GroupName>
+          <Files>
+            <File>
+              <FileName>modbus.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\BSP\MODBUS\modbus.c</FilePath>
+            </File>
+            <File>
+              <FileName>modbus.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\BSP\MODBUS\modbus.h</FilePath>
             </File>
           </Files>
         </Group>
